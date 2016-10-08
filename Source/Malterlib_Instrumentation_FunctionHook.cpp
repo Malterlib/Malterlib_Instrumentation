@@ -637,6 +637,10 @@ namespace NMib
 				if (bSuspend)
 					fp_Resume();
 			}
+			else
+			{
+				DMHookTrace("mhooks: No such trapoline{\n}", 0);
+			}
 			return bRet;
 		}
 
