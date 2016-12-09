@@ -37,6 +37,51 @@ namespace NMib
 				, EJmpSize = 5
 			};
 
+			class CAllocatorIgnore : public NMib::NMem::CAllocator_NonTrackedHeap
+			{
+			public:
+				only_parameters_aliased return_not_aliased static void *f_AllocDebug(mint &_Size, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				{
+					return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+				}
+				only_parameters_aliased return_not_aliased static void *f_AllocDebug(const mint &_Size, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				{
+					return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+				}
+				only_parameters_aliased return_not_aliased static void *f_AllocAlignedDebug(mint &_Size, mint _Alignment, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				{
+					return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(_Size, _Alignment, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+				}
+				only_parameters_aliased return_not_aliased static void *f_AllocAligendDebug(const mint &_Size, mint _Alignment, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				{
+					mint Size = _Size;
+					return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(Size, _Alignment, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+				}
+				only_parameters_aliased return_not_aliased static void *f_Alloc(mint &_Size, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				{
+					return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+				}
+				only_parameters_aliased return_not_aliased static void *f_Alloc(const mint &_Size, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				{
+					return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+				}
+				only_parameters_aliased return_not_aliased static void *f_AllocAligned(mint &_Size, mint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				{
+					return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(_Size, _Alignment, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+				}
+				only_parameters_aliased return_not_aliased static void *f_AllocAligned(const mint &_Size, mint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				{
+					mint Size = _Size;
+					return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(Size, _Alignment, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+				}
+			};
+			
+#			if DMibConfig_MalterlibMemoryManager_Debug
+				using CAllocator = CAllocatorIgnore;
+#			else
+				using CAllocator = NMib::NMem::CAllocator_NonTrackedHeap;
+#			endif
+			
 			//=========================================================================
 			// The trampoline structure - stores every bit of info about a hook
 
@@ -72,16 +117,16 @@ namespace NMib
 				void f_Protect();
 			};
 
-			NMib::NContainer::TCMap<uint8 *, CTrampolinePool, NMib::CSort_Default, NMib::NMem::CAllocator_NonTrackedHeap> m_TrampolinePools;
+			NMib::NContainer::TCMap<uint8 *, CTrampolinePool, NMib::CSort_Default, CAllocator> m_TrampolinePools;
 
 			struct CModuleCache
 			{
 				mint m_Size;
 				bool m_bImage;
 			};
-			NMib::NContainer::TCMap<mint, CModuleCache, NMib::CSort_Default, NMib::NMem::CAllocator_NonTrackedHeap> m_ModulesCache;
+			NMib::NContainer::TCMap<mint, CModuleCache, NMib::CSort_Default, CAllocator> m_ModulesCache;
 
-			NMib::NContainer::TCRegions<uint8 *, NMib::CVoidTag, NMib::NMem::CAllocator_NonTrackedHeap> m_Unprotected;
+			NMib::NContainer::TCRegions<uint8 *, NMib::CVoidTag, CAllocator> m_Unprotected;
 
 			//=========================================================================
 			// The patch data structures - store info about rip-relative instructions
@@ -104,7 +149,7 @@ namespace NMib
 			// Global vars
 			NMib::NThread::CMutual m_Lock;
 
-			NMib::NContainer::TCMap<void *, CTrampoline *, NMib::CSort_Default, NMib::NMem::CAllocator_NonTrackedHeap> m_Hooks;
+			NMib::NContainer::TCMap<void *, CTrampoline *, NMib::CSort_Default, CAllocator> m_Hooks;
 			zmint m_IsSuspended;
 
 			bool fp_Unprotect(uint8 *_pMem, mint _Size);
