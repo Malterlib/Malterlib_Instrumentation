@@ -182,7 +182,7 @@ namespace NMib
 			uint8 *pUpper = pSystemFunction + nLimitDown;
 			pUpper = pUpper < (uint8 *)(mint)0xffffffff80000000 ? (uint8 *)(pUpper + (mint)0x7ff80000) : (uint8 *)(mint)0xfffffffffff80000;
 
-			for (auto iPool = m_TrampolinePools.f_GetIterator_LargestLessThanEqual(pSystemFunction); iPool; ++iPool)
+			for (auto iPool = m_TrampolinePools.f_GetIterator_SmallestGreaterThanEqual(pLower); iPool; ++iPool)
 			{
 				uint8 *pStart = iPool.f_GetKey();
 				auto pPool = &*iPool;
