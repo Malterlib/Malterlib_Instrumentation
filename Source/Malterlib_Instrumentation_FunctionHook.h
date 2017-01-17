@@ -40,36 +40,36 @@ namespace NMib
 			class CAllocatorIgnore : public NMib::NMem::CAllocator_NonTrackedHeap
 			{
 			public:
-				only_parameters_aliased return_not_aliased static void *f_AllocDebug(mint &_Size, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				only_parameters_aliased malloc_like static void *f_AllocDebug(mint &_Size, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
 				{
 					return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 				}
-				only_parameters_aliased return_not_aliased static void *f_AllocDebug(const mint &_Size, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				only_parameters_aliased malloc_like static void *f_AllocDebug(const mint &_Size, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
 				{
 					return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 				}
-				only_parameters_aliased return_not_aliased static void *f_AllocAlignedDebug(mint &_Size, mint _Alignment, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				only_parameters_aliased malloc_like static void *f_AllocAlignedDebug(mint &_Size, mint _Alignment, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
 				{
 					return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(_Size, _Alignment, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 				}
-				only_parameters_aliased return_not_aliased static void *f_AllocAligendDebug(const mint &_Size, mint _Alignment, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				only_parameters_aliased malloc_like static void *f_AllocAligendDebug(const mint &_Size, mint _Alignment, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
 				{
 					mint Size = _Size;
 					return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(Size, _Alignment, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 				}
-				only_parameters_aliased return_not_aliased static void *f_Alloc(mint &_Size, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				only_parameters_aliased malloc_like static void *f_Alloc(mint &_Size, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
 				{
 					return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 				}
-				only_parameters_aliased return_not_aliased static void *f_Alloc(const mint &_Size, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				only_parameters_aliased malloc_like static void *f_Alloc(const mint &_Size, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
 				{
 					return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 				}
-				only_parameters_aliased return_not_aliased static void *f_AllocAligned(mint &_Size, mint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				only_parameters_aliased malloc_like static void *f_AllocAligned(mint &_Size, mint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
 				{
 					return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(_Size, _Alignment, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 				}
-				only_parameters_aliased return_not_aliased static void *f_AllocAligned(const mint &_Size, mint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				only_parameters_aliased malloc_like static void *f_AllocAligned(const mint &_Size, mint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
 				{
 					mint Size = _Size;
 					return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(Size, _Alignment, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
