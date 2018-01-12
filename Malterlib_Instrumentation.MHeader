@@ -5,6 +5,12 @@ Import "../Core/Lib_Malterlib.MTarget"
 
 %Group "{Malterlib}/{Lib_Malterlib_Instrumentation}"
 {
+	Compile
+	{
+		!!CompileDialect "C"
+		PrefixHeader ""
+	}
+
 	%Group Instrumentation
 	{
 		%Group Include
@@ -28,6 +34,34 @@ Import "../Core/Lib_Malterlib.MTarget"
 			%File "Documentation/*"
 		}
 	}
+	%Group MHook
+	{
+		Compile.Disabled true
+		{
+			!PlatformFamily OSX
+		}
+
+		%Group SDK
+		{
+			Compile
+			{
+				PreprocessorDefines "malloc=nontracked_malloc;@(Compile.PreprocessorDefines)"
+				PreprocessorDefines "free=nontracked_free;@(Compile.PreprocessorDefines)"
+				PreprocessorDefines "calloc=nontracked_calloc;@(Compile.PreprocessorDefines)"
+				PreprocessorDefines "realloc=nontracked_realloc;@(Compile.PreprocessorDefines)"
+				PreprocessorDefines "cfree=nontracked_cfree;@(Compile.PreprocessorDefines)"
+				PreprocessorDefines "memalign=nontracked_memalign;@(Compile.PreprocessorDefines)"
+				PreprocessorDefines "posix_memalign=nontracked_posix_memalign;@(Compile.PreprocessorDefines)"
+				PreprocessorDefines "valloc=nontracked_valloc;@(Compile.PreprocessorDefines)"
+				PreprocessorDefines "pvalloc=nontracked_pvalloc;@(Compile.PreprocessorDefines)"
+				PreprocessorDefines "malloc_usable_size=nontracked_malloc_usable_size;@(Compile.PreprocessorDefines)"
+			}
+			%Group disasm
+			{
+				%File "../../SDK/mhook/disasm-lib/*"
+			}
+		}
+	}
 }
 
 
@@ -45,6 +79,7 @@ Property
 	{
 		!!MalterlibLibrary_Instrumentation true
 	}
+	MalterlibLibrarySeparate_Lib_Malterlib_Instrumentation true
 //	MalterlibSubLibrarySeparate_Lib_Malterlib_Instrumentation true
 	MalterlibIncludeRoots "@('Include'->MakeAbsolute());@(MalterlibIncludeRoots)"
 	{
