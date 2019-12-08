@@ -11,9 +11,9 @@ Import "../Core/Lib_Malterlib.MTarget"
 		PrefixHeader ""
 	}
 
-	%Group Instrumentation
+	%Group "Instrumentation"
 	{
-		%Group Include
+		%Group "Include"
 		{
 			Compile.Type "C++"
 			{
@@ -26,22 +26,22 @@ Import "../Core/Lib_Malterlib.MTarget"
 		{
 			Compile.Disabled true
 			{
-				!PlatformFamily OSX
+				!PlatformFamily "OSX"
 			}
 		}
-		%Group Documentation
+		%Group "Documentation"
 		{
 			%File "Documentation/*"
 		}
 	}
-	%Group MHook
+	%Group "MHook"
 	{
 		Compile.Disabled true
 		{
-			!PlatformFamily OSX
+			!PlatformFamily "OSX"
 		}
 
-		%Group SDK
+		%Group "SDK"
 		{
 			Compile
 			{
@@ -56,7 +56,7 @@ Import "../Core/Lib_Malterlib.MTarget"
 				PreprocessorDefines "pvalloc=nontracked_pvalloc;@(Compile.PreprocessorDefines)"
 				PreprocessorDefines "malloc_usable_size=nontracked_malloc_usable_size;@(Compile.PreprocessorDefines)"
 			}
-			%Group disasm
+			%Group "disasm"
 			{
 				%File "../../SDK/mhook/disasm-lib/*"
 			}
