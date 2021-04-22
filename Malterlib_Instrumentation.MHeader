@@ -8,7 +8,7 @@ Import "../Core/Lib_Malterlib.MTarget"
 	Compile
 	{
 		!!CompileDialect "C"
-		PrefixHeader ""
+		PrefixHeader undefined
 	}
 
 	%Group "Instrumentation"
@@ -45,16 +45,16 @@ Import "../Core/Lib_Malterlib.MTarget"
 		{
 			Compile
 			{
-				PreprocessorDefines "malloc=nontracked_malloc;@(Compile.PreprocessorDefines)"
-				PreprocessorDefines "free=nontracked_free;@(Compile.PreprocessorDefines)"
-				PreprocessorDefines "calloc=nontracked_calloc;@(Compile.PreprocessorDefines)"
-				PreprocessorDefines "realloc=nontracked_realloc;@(Compile.PreprocessorDefines)"
-				PreprocessorDefines "cfree=nontracked_cfree;@(Compile.PreprocessorDefines)"
-				PreprocessorDefines "memalign=nontracked_memalign;@(Compile.PreprocessorDefines)"
-				PreprocessorDefines "posix_memalign=nontracked_posix_memalign;@(Compile.PreprocessorDefines)"
-				PreprocessorDefines "valloc=nontracked_valloc;@(Compile.PreprocessorDefines)"
-				PreprocessorDefines "pvalloc=nontracked_pvalloc;@(Compile.PreprocessorDefines)"
-				PreprocessorDefines "malloc_usable_size=nontracked_malloc_usable_size;@(Compile.PreprocessorDefines)"
+				PreprocessorDefines += "malloc=nontracked_malloc"
+				PreprocessorDefines += "free=nontracked_free"
+				PreprocessorDefines += "calloc=nontracked_calloc"
+				PreprocessorDefines += "realloc=nontracked_realloc"
+				PreprocessorDefines += "cfree=nontracked_cfree"
+				PreprocessorDefines += "memalign=nontracked_memalign"
+				PreprocessorDefines += "posix_memalign=nontracked_posix_memalign"
+				PreprocessorDefines += "valloc=nontracked_valloc"
+				PreprocessorDefines += "pvalloc=nontracked_pvalloc"
+				PreprocessorDefines += "malloc_usable_size=nontracked_malloc_usable_size"
 			}
 			%Group "disasm"
 			{
@@ -67,21 +67,14 @@ Import "../Core/Lib_Malterlib.MTarget"
 
 Property
 {
-	MalterlibLibrary_Instrumentation true
-	{
-		&
-		{
-			MalterlibLibrary_Instrumentation ""
-			MalterlibLibrary_All true
-		}
-	}
-	MalterlibSubLibraries "Instrumentation;@(MalterlibSubLibraries)"
+	MalterlibLibrary_Instrumentation define bool = MalterlibLibrary_All
+	MalterlibSubLibraries =+ "Instrumentation"
 	{
 		!!MalterlibLibrary_Instrumentation true
 	}
-	MalterlibLibrarySeparate_Lib_Malterlib_Instrumentation true
-//	MalterlibSubLibrarySeparate_Lib_Malterlib_Instrumentation true
-	MalterlibIncludeRoots "@('Include'->MakeAbsolute());@(MalterlibIncludeRoots)"
+	MalterlibLibrarySeparate_Lib_Malterlib_Instrumentation define bool = true
+//	MalterlibSubLibrarySeparate_Lib_Malterlib_Instrumentation define bool = true
+	MalterlibIncludeRoots =+ "Include"->MakeAbsolute()
 	{
 		!!MalterlibLibrary_Instrumentation true
 	}
@@ -91,7 +84,7 @@ Property
 {
 	!!MalterlibEnableInternalTests true
 	
-	MalterlibTests "Malterlib_Instrumentation;@(MalterlibTests)"
-	//MalterlibTestFiles_Malterlib_Instrumentation "@('Test/*'->MakeAbsolute())"
+	MalterlibTests =+ "Malterlib_Instrumentation"
+	//MalterlibTestFiles_Malterlib_Instrumentation define [type(CEntity)] = ["Test/*"->MakeAbsolute()]
 }
 
