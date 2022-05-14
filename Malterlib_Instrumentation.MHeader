@@ -3,6 +3,15 @@
 
 Import "../Core/Lib_Malterlib.MTarget"
 
+%Repository "mhook"
+{
+	Repository
+	{
+		Type "External"
+		Remotes =+ {Name: "upstream", URL: "https://github.com/apriorit/mhook.git"}
+	}
+}
+
 %Group "{Malterlib}/{Lib_Malterlib_Instrumentation}"
 {
 	Compile
@@ -41,6 +50,17 @@ Import "../Core/Lib_Malterlib.MTarget"
 			!PlatformFamily "OSX"
 		}
 
+		Compile.FullEval true
+
+		Compile.Warnings_Switch false
+		{
+			&
+			{
+				CompileDialect "C"
+				GeneratorFamily "Xcode"
+			}
+		}
+
 		%Group "SDK"
 		{
 			Compile
@@ -58,12 +78,11 @@ Import "../Core/Lib_Malterlib.MTarget"
 			}
 			%Group "disasm"
 			{
-				%File "../../SDK/mhook/disasm-lib/*"
+				%File "../../External/mhook/disasm-lib/*"
 			}
 		}
 	}
 }
-
 
 Property
 {
