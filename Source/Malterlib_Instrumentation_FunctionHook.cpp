@@ -24,7 +24,7 @@
 #ifndef DPlatformFamily_Windows
 
 #include "Malterlib_Instrumentation_FunctionHook.h"
-#include "../../../SDK/mhook/disasm-lib/disasm.h"
+#include "../../../External/mhook/disasm-lib/disasm.h"
 
 namespace NMib::NInstrumentation
 {
