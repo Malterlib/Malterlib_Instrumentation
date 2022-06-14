@@ -35,7 +35,7 @@ Import "../Core/Lib_Malterlib.MTarget"
 		{
 			Compile.Disabled true
 			{
-				!PlatformFamily "OSX"
+				!PlatformFamily "macOS"
 			}
 		}
 		%Group "Documentation"
@@ -47,7 +47,7 @@ Import "../Core/Lib_Malterlib.MTarget"
 	{
 		Compile.Disabled true
 		{
-			!PlatformFamily "OSX"
+			!PlatformFamily "macOS"
 		}
 
 		Compile.FullEval true
