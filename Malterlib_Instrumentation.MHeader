@@ -86,13 +86,13 @@ Import "../Core/Lib_Malterlib.MTarget"
 
 Property
 {
-	MalterlibLibrary_Instrumentation define bool = MalterlibLibrary_All
+	MalterlibLibrary_Instrumentation: bool = MalterlibLibrary_All
 	MalterlibSubLibraries =+ "Instrumentation"
 	{
 		!!MalterlibLibrary_Instrumentation true
 	}
-	MalterlibLibrarySeparate_Lib_Malterlib_Instrumentation define bool = true
-//	MalterlibSubLibrarySeparate_Lib_Malterlib_Instrumentation define bool = true
+	MalterlibLibrarySeparate_Lib_Malterlib_Instrumentation: bool = true
+//	MalterlibSubLibrarySeparate_Lib_Malterlib_Instrumentation: bool = true
 	MalterlibIncludeRoots =+ "Include"->MakeAbsolute()
 	{
 		!!MalterlibLibrary_Instrumentation true
@@ -104,6 +104,6 @@ Property
 	!!MalterlibEnableInternalTests true
 	
 	MalterlibTests =+ "Malterlib_Instrumentation"
-	//MalterlibTestFiles_Malterlib_Instrumentation define [type(CEntity)] = ["Test/*"->MakeAbsolute()]
+	//MalterlibTestFiles_Malterlib_Instrumentation: [type(CEntity)] = ["Test/*"->MakeAbsolute()]
 }
 
