@@ -57,7 +57,7 @@ Import "../Core/Lib_Malterlib.MTarget"
 			&
 			{
 				CompileDialect "C"
-				GeneratorFamily "Xcode"
+				Compiler "Clang"
 			}
 		}
 
