@@ -97,7 +97,7 @@ namespace NMib::NInstrumentation
 	#if defined(DArchitecture_x86) || defined(DArchitecture_x64)
 		uint8 *pbJumpFrom = pbCode + 5;
 		mint cbDiff = pbJumpFrom > pbJumpTo ? pbJumpFrom - pbJumpTo : pbJumpTo - pbJumpFrom;
-		DMHookTrace("mhooks: fp_EmitJump: Jumping from {} to {}, diff is {}{\n}", pbJumpFrom << pbJumpTo << cbDiff);
+		DMHookTrace("mhooks: fp_EmitJump: Jumping from {} to {}, diff is {}{\n}", pbJumpFrom, pbJumpTo, cbDiff);
 		if (cbDiff <= 0x7fff0000) {
 			pbCode[0] = 0xe9;
 			pbCode += 1;
@@ -211,7 +211,7 @@ namespace NMib::NInstrumentation
 			// determine lower and upper bounds for the allocation locations.
 			// in the basic scenario this is +/- 2GB but IP-relative instructions
 			// found in the original code may require a smaller window.
-			DMHookTrace("mhooks: fp_TrampolineAlloc: Allocating for {} between {} and {}{\n}", pSystemFunction << pLower << pUpper);
+			DMHookTrace("mhooks: fp_TrampolineAlloc: Allocating for {} between {} and {}{\n}", pSystemFunction, pLower, pUpper);
 
 			mint Size = NMemory::CAllocator_VirtualNoTracking::f_SizePadded(sizeof(CTrampoline));
 			pMemory = (uint8 *)NSys::fg_Mem_VirtualAllocInRange(Size, pLower, pUpper, EAllocationFlag_WillFreeWithSize);
@@ -327,7 +327,7 @@ namespace NMib::NInstrumentation
 
 			DMHookTrace("mhooks:	: Disassembling {}{\n}", pLoc);
 			while ( (dwRet < dwMinLen) && (pins = GetInstruction(&dis, (ULONG_PTR)pLoc, pLoc, dwFlags)) ) {
-				DMHookTrace("mhooks: fp_DisassembleAndSkip: {}: {}{\n}", pLoc << pins->String);
+				DMHookTrace("mhooks: fp_DisassembleAndSkip: {}: {}{\n}", pLoc, pins->String);
 				if (pins->Type == ITYPE_RET		) break;
 				if (pins->Type == ITYPE_BRANCH	) break;
 				if (pins->Type == ITYPE_BRANCHCC) break;
@@ -366,36 +366,36 @@ namespace NMib::NInstrumentation
 					{
 						// rip-addressing "mov reg, [rip+imm32]"
 						// rip-addressing "mov [rip+imm32], reg"
-						DMHookTrace("mhooks: fp_DisassembleAndSkip: found OP_IPREL on operand {} with displacement 0x{nfh,sj8,sf0} (in memory: {}){\n}", 1 << pins->X86.Displacement << *(int32 *)(pLoc+(pins->Length - 4)));
+						DMHookTrace("mhooks: fp_DisassembleAndSkip: found OP_IPREL on operand {} with displacement 0x{nfh,sj8,sf0} (in memory: {}){\n}", 1, pins->X86.Displacement, *(int32 *)(pLoc+(pins->Length - 4)));
 						bProcessRip = true;
 					}
 					else if ( (pins->OperandCount >= 1) && (pins->Operands[0].Flags & OP_IPREL) )
 					{
 						// unsupported rip-addressing
-						DMHookTrace("mhooks: fp_DisassembleAndSkip: found unsupported OP_IPREL on operand {} at {}{\n}", 0 << pLoc);
+						DMHookTrace("mhooks: fp_DisassembleAndSkip: found unsupported OP_IPREL on operand {} at {}{\n}", 0, pLoc);
 						// dump instruction bytes to the debug output
 						for (uint32 i=0; i<pins->Length; i++) {
-							DMHookTrace("mhooks: fp_DisassembleAndSkip: instr byte {sj2,sf0}: 0x{nfh,sj2,sf0}{\n}", i << pLoc[i]);
+							DMHookTrace("mhooks: fp_DisassembleAndSkip: instr byte {sj2,sf0}: 0x{nfh,sj2,sf0}{\n}", i, pLoc[i]);
 						}
 						break;
 					}
 					else if ( (pins->OperandCount >= 2) && (pins->Operands[1].Flags & OP_IPREL) )
 					{
 						// unsupported rip-addressing
-						DMHookTrace("mhooks: fp_DisassembleAndSkip: found unsupported OP_IPREL on operand {} at {}{\n}", 1 << pLoc);
+						DMHookTrace("mhooks: fp_DisassembleAndSkip: found unsupported OP_IPREL on operand {} at {}{\n}", 1, pLoc);
 						// dump instruction bytes to the debug output
 						for (uint32 i=0; i<pins->Length; i++) {
-							DMHookTrace("mhooks: fp_DisassembleAndSkip: instr byte {sj2,sf0}: 0x{nfh,sj2,sf0}{\n}", i << pLoc[i]);
+							DMHookTrace("mhooks: fp_DisassembleAndSkip: instr byte {sj2,sf0}: 0x{nfh,sj2,sf0}{\n}", i, pLoc[i]);
 						}
 						break;
 					}
 					else if ( (pins->OperandCount >= 3) && (pins->Operands[2].Flags & OP_IPREL) )
 					{
 						// unsupported rip-addressing
-						DMHookTrace("mhooks: fp_DisassembleAndSkip: found unsupported OP_IPREL on operand {} at {}{\n}", 2 << pLoc);
+						DMHookTrace("mhooks: fp_DisassembleAndSkip: found unsupported OP_IPREL on operand {} at {}{\n}", 2, pLoc);
 						// dump instruction bytes to the debug output
 						for (uint32 i=0; i<pins->Length; i++) {
-							DMHookTrace("mhooks: fp_DisassembleAndSkip: instr byte {sj2,sf0}: 0x{nfh,sj2,sf0}{\n}", i << pLoc[i]);
+							DMHookTrace("mhooks: fp_DisassembleAndSkip: instr byte {sj2,sf0}: 0x{nfh,sj2,sf0}{\n}", i, pLoc[i]);
 						}
 						break;
 					}
@@ -494,13 +494,13 @@ namespace NMib::NInstrumentation
 		void * pSystemFunction = *ppSystemFunction;
 		// ensure thread-safety
 		DMibLock(m_Lock);
-		DMHookTrace("mhooks: Mhook_SetHook: Started on the job: {} / {}{\n}", pSystemFunction << pHookFunction);
+		DMHookTrace("mhooks: Mhook_SetHook: Started on the job: {} / {}{\n}", pSystemFunction, pHookFunction);
 		// find the real functions (jump over jump tables, if any)
 		pSystemFunction = fp_SkipJumps((uint8 *)pSystemFunction);
 		pHookFunction   = fp_SkipJumps((uint8 *)pHookFunction);
 		if (!pSystemFunction || !pHookFunction)
 			return false;
-		DMHookTrace("mhooks: Mhook_SetHook: Started on the job: {} / {}{\n}", pSystemFunction << pHookFunction);
+		DMHookTrace("mhooks: Mhook_SetHook: Started on the job: {} / {}{\n}", pSystemFunction, pHookFunction);
 		// figure out the length of the overwrite zone
 		CPatchData patchdata = {0};
 		uint32 dwInstructionLength = fp_DisassembleAndSkip(pSystemFunction, EJmpSize, &patchdata);
