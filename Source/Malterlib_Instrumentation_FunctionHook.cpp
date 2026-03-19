@@ -96,12 +96,12 @@ namespace NMib::NInstrumentation
 	{
 	#if defined(DArchitecture_x86) || defined(DArchitecture_x64)
 		uint8 *pbJumpFrom = pbCode + 5;
-		mint cbDiff = pbJumpFrom > pbJumpTo ? pbJumpFrom - pbJumpTo : pbJumpTo - pbJumpFrom;
+		umint cbDiff = pbJumpFrom > pbJumpTo ? pbJumpFrom - pbJumpTo : pbJumpTo - pbJumpFrom;
 		DMHookTrace("mhooks: fp_EmitJump: Jumping from {} to {}, diff is {}{\n}", pbJumpFrom, pbJumpTo, cbDiff);
 		if (cbDiff <= 0x7fff0000) {
 			pbCode[0] = 0xe9;
 			pbCode += 1;
-			*((uint32 *)pbCode) = (uint32)(mint)(pbJumpTo - pbJumpFrom);
+			*((uint32 *)pbCode) = (uint32)(umint)(pbJumpTo - pbJumpFrom);
 			pbCode += sizeof(uint32);
 		} else {
 			// movabs x, eax/rax
@@ -111,8 +111,8 @@ namespace NMib::NInstrumentation
 	#endif
 			*pbCode = 0xb8;
 			++pbCode;
-			*((mint *)pbCode) = (mint)(pbJumpTo);
-			pbCode += sizeof(mint);
+			*((umint *)pbCode) = (umint)(pbJumpTo);
+			pbCode += sizeof(umint);
 			// jmp eax/rax
 			pbCode[0] = 0xff;
 			pbCode[1] = 0xe0;
@@ -132,14 +132,14 @@ namespace NMib::NInstrumentation
 	// the target function.
 	//=========================================================================
 
-	CMHook::CTrampolinePool::CTrampolinePool(void *_pMemory, mint _MemorySize)
+	CMHook::CTrampolinePool::CTrampolinePool(void *_pMemory, umint _MemorySize)
 	{
-		mint nTrampoline = _MemorySize / sizeof(CTrampoline);
+		umint nTrampoline = _MemorySize / sizeof(CTrampoline);
 		m_Size = nTrampoline * sizeof(CTrampoline);
 
 		CTrampoline *pTrampolines = (CTrampoline *)_pMemory;
 
-		for (mint i = 0; i < nTrampoline; ++i)
+		for (umint i = 0; i < nTrampoline; ++i)
 		{
 			auto pData = &pTrampolines[i];
 
@@ -169,16 +169,16 @@ namespace NMib::NInstrumentation
 
 		m_FreeTrampolines.f_Clear();
 
-		mint Size = NMemory::CAllocator_VirtualNoTracking::f_SizePadded(sizeof(CTrampoline));
+		umint Size = NMemory::CAllocator_VirtualNoTracking::f_SizePadded(sizeof(CTrampoline));
 		NMemory::CAllocator_VirtualNoTracking::f_Free(pStart, Size);
 	}
 
 	CMHook::CTrampoline *CMHook::fp_TrampolineAlloc(uint8 *pSystemFunction, int64 nLimitUp, int64 nLimitDown)
 	{
 		uint8 *pLower = pSystemFunction + nLimitUp;
-		pLower = pLower < (uint8 *)(mint)0x0000000080000000 ? (uint8 *)(0x1) : (uint8 *)(pLower - (uint8 *)0x7fff0000);
+		pLower = pLower < (uint8 *)(umint)0x0000000080000000 ? (uint8 *)(0x1) : (uint8 *)(pLower - (uint8 *)0x7fff0000);
 		uint8 *pUpper = pSystemFunction + nLimitDown;
-		pUpper = pUpper < (uint8 *)(mint)0xffffffff80000000 ? (uint8 *)(pUpper + (mint)0x7ff80000) : (uint8 *)(mint)0xfffffffffff80000;
+		pUpper = pUpper < (uint8 *)(umint)0xffffffff80000000 ? (uint8 *)(pUpper + (umint)0x7ff80000) : (uint8 *)(umint)0xfffffffffff80000;
 
 		for (auto iPool = m_TrampolinePools.f_GetIterator_SmallestGreaterThanEqual(pLower); iPool; ++iPool)
 		{
@@ -213,7 +213,7 @@ namespace NMib::NInstrumentation
 			// found in the original code may require a smaller window.
 			DMHookTrace("mhooks: fp_TrampolineAlloc: Allocating for {} between {} and {}{\n}", pSystemFunction, pLower, pUpper);
 
-			mint Size = NMemory::CAllocator_VirtualNoTracking::f_SizePadded(sizeof(CTrampoline));
+			umint Size = NMemory::CAllocator_VirtualNoTracking::f_SizePadded(sizeof(CTrampoline));
 			pMemory = (uint8 *)NSys::fg_Mem_VirtualAllocInRange(Size, pLower, pUpper, EAllocationFlag_WillFreeWithSize);
 
 			// found and allocated a trampoline?
@@ -430,7 +430,7 @@ namespace NMib::NInstrumentation
 		return dwRet;
 	}
 
-	bool CMHook::fp_Unprotect(uint8 *_pMem, mint _Size)
+	bool CMHook::fp_Unprotect(uint8 *_pMem, umint _Size)
 	{
 		uint8 *pStart = fg_AlignDown(_pMem, 4096);
 		uint8 *pEnd = fg_AlignUp(_pMem + _Size, 4096);
@@ -468,7 +468,7 @@ namespace NMib::NInstrumentation
 			if (!iRegion->f_Data())
 			{
 				uint8 *pStart = iRegion->f_Start();
-				mint Size = iRegion->f_End() - iRegion->f_Start();
+				umint Size = iRegion->f_End() - iRegion->f_Start();
 				try
 				{
 					NSys::fg_Mem_VirtualProtect(pStart, Size, EProtect_Exec | EProtect_Read | EProtect_Write);
@@ -536,7 +536,7 @@ namespace NMib::NInstrumentation
 					// fix up any IP-relative addressing in the code
 					fp_FixupIPRelativeAddressing(pTrampoline->codeTrampoline, (uint8 *)pSystemFunction, &patchdata);
 
-					mint dwDistance = (uint8 *)pHookFunction < (uint8 *)pSystemFunction ?
+					umint dwDistance = (uint8 *)pHookFunction < (uint8 *)pSystemFunction ?
 						(uint8 *)pSystemFunction - (uint8 *)pHookFunction : (uint8 *)pHookFunction - (uint8 *)pSystemFunction;
 					if (dwDistance > 0x7fff0000) {
 						// create a stub that jumps to the replacement function.
