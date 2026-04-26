@@ -9,6 +9,9 @@ Import "../Core/Lib_Malterlib.MTarget"
 	{
 		Type "External"
 		Remotes =+ {Name: "upstream", URL: "https://github.com/apriorit/mhook.git"}
+		{
+			!!MalterlibAddUpstreams true
+		}
 	}
 }
 
@@ -103,7 +106,7 @@ Property
 Property
 {
 	!!MalterlibEnableInternalTests true
-	
+
 	MalterlibTests =+ "Malterlib_Instrumentation"
 	//MalterlibTestFiles_Malterlib_Instrumentation: [type(CEntity)] = ["Test/*"->MakeAbsolute()]
 }
