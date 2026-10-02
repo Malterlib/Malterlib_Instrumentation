@@ -36,8 +36,8 @@ namespace NMib::NInstrumentation
 		enum
 		{
 			EMaxCodeBytes = 32
-			, EMaxRips = 4
-			, EJmpSize = 5
+			, EMaxRips    = 4
+			, EJmpSize    = 5
 		};
 
 		class CAllocatorIgnore : public NMib::NMemory::CAllocator_NonTrackedHeap
@@ -45,39 +45,99 @@ namespace NMib::NInstrumentation
 		public:
 			using CAutoDestroy = NMemory::TCAllocator_AutoDestroyStatic<CAllocatorIgnore>;
 
-			only_parameters_aliased malloc_like static void *f_AllocWithSizeDebug(umint &_Size, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+			only_parameters_aliased malloc_like static void *f_AllocWithSizeDebug
+				(
+					umint &_Size
+					, ch8 const *_pFile
+					, aint _Line
+					, EHeapDebugFlag _Flags = EHeapDebugFlag_None
+					, EAllocationFlag _AllocFlags = EAllocationFlag_None
+					, ENumaNode _NumaNode = ENumaNode_Default
+				)
 			{
 				return CAllocator_NonTrackedHeap::f_AllocWithSizeDebug(_Size, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 			}
-			only_parameters_aliased malloc_like static void *f_AllocDebug(umint _Size, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+
+			only_parameters_aliased malloc_like static void *f_AllocDebug
+				(
+					umint _Size
+					, ch8 const *_pFile
+					, aint _Line
+					, EHeapDebugFlag _Flags = EHeapDebugFlag_None
+					, EAllocationFlag _AllocFlags = EAllocationFlag_None
+					, ENumaNode _NumaNode = ENumaNode_Default
+				)
 			{
 				return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 			}
-			only_parameters_aliased malloc_like static void *f_AllocAlignedWithSizeDebug(umint &_Size, umint _Alignment, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+
+			only_parameters_aliased malloc_like static void *f_AllocAlignedWithSizeDebug
+				(
+					umint &_Size
+					, umint _Alignment
+					, ch8 const *_pFile
+					, aint _Line
+					, EHeapDebugFlag _Flags = EHeapDebugFlag_None
+					, EAllocationFlag _AllocFlags = EAllocationFlag_None
+					, ENumaNode _NumaNode = ENumaNode_Default
+				)
 			{
 				return CAllocator_NonTrackedHeap::f_AllocAlignedWithSizeDebug(_Size, _Alignment, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 			}
-			only_parameters_aliased malloc_like static void *f_AllocAlignedDebug(umint _Size, umint _Alignment, const ch8 *_pFile, aint _Line, EHeapDebugFlag _Flags = EHeapDebugFlag_None, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+
+			only_parameters_aliased malloc_like static void *f_AllocAlignedDebug
+				(
+					umint _Size
+					, umint _Alignment
+					, ch8 const *_pFile
+					, aint _Line
+					, EHeapDebugFlag _Flags = EHeapDebugFlag_None
+					, EAllocationFlag _AllocFlags = EAllocationFlag_None
+					, ENumaNode _NumaNode = ENumaNode_Default
+				)
 			{
 				return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(_Size, _Alignment, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 			}
+
 			only_parameters_aliased malloc_like static void *f_AllocWithSize(umint &_Size, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
 			{
 				return CAllocator_NonTrackedHeap::f_AllocWithSizeDebug(_Size, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 			}
+
 			only_parameters_aliased malloc_like static void *f_Alloc(umint _Size, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
 			{
 				return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 			}
-			only_parameters_aliased malloc_like static void *f_AllocAlignedWithSize(umint &_Size, umint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+
+			only_parameters_aliased malloc_like static void *f_AllocAlignedWithSize
+				(
+					umint &_Size
+					, umint _Alignment
+					, EAllocationFlag _AllocFlags = EAllocationFlag_None
+					, ENumaNode _NumaNode = ENumaNode_Default
+				)
 			{
 				return CAllocator_NonTrackedHeap::f_AllocAlignedWithSizeDebug(_Size, _Alignment, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 			}
-			only_parameters_aliased malloc_like static void *f_AllocAligned(umint _Size, umint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+
+			only_parameters_aliased malloc_like static void *f_AllocAligned
+				(
+					umint _Size
+					, umint _Alignment
+					, EAllocationFlag _AllocFlags = EAllocationFlag_None
+					, ENumaNode _NumaNode = ENumaNode_Default
+				)
 			{
 				return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(_Size, _Alignment, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
 			}
-			only_parameters_aliased static CAutoDestroy f_AllocSafeWithSize(umint &_Size, umint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+
+			only_parameters_aliased static CAutoDestroy f_AllocSafeWithSize
+				(
+					umint &_Size
+					, umint _Alignment
+					, EAllocationFlag _AllocFlags = EAllocationFlag_None
+					, ENumaNode _NumaNode = ENumaNode_Default
+				)
 			{
 				CAutoDestroy AutoDestroy;
 				AutoDestroy.m_pMemory = f_AllocAlignedWithSize(_Size, _Alignment, _AllocFlags, _NumaNode);
@@ -85,7 +145,9 @@ namespace NMib::NInstrumentation
 
 				return fg_Move(AutoDestroy);
 			}
-			only_parameters_aliased static CAutoDestroy f_AllocSafe(umint _Size, umint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+
+			only_parameters_aliased static auto f_AllocSafe(umint _Size, umint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+				-> CAutoDestroy
 			{
 				CAutoDestroy AutoDestroy;
 				AutoDestroy.m_pMemory = f_AllocAligned(_Size, _Alignment, _AllocFlags, _NumaNode);
@@ -95,11 +157,11 @@ namespace NMib::NInstrumentation
 			}
 		};
 
-#			if DMibConfig_MalterlibMemoryManager_Debug
-			using CAllocator = CAllocatorIgnore;
-#			else
-			using CAllocator = NMib::NMemory::CAllocator_NonTrackedHeap;
-#			endif
+#if DMibConfig_MalterlibMemoryManager_Debug
+		using CAllocator = CAllocatorIgnore;
+#else
+		using CAllocator = NMib::NMemory::CAllocator_NonTrackedHeap;
+#endif
 
 		//=========================================================================
 		// The trampoline structure - stores every bit of info about a hook
@@ -113,15 +175,12 @@ namespace NMib::NInstrumentation
 		struct CTrampoline
 		{
 			CTrampolinePool *m_pPool;
-			uint8 *pSystemFunction;							// the original system function
-			uint32 cbOverwrittenCode;						// number of bytes overwritten by the jump
-			uint8 *pHookFunction;							// the hook function that we provide
-			uint8 codeJumpToHookFunction[EMaxCodeBytes];	// placeholder for code that jumps to the hook function
-			uint8 codeTrampoline[EMaxCodeBytes];			// placeholder for code that holds the first few
-															//   bytes from the system function and a jump to the remainder
-															//   in the original location
-			uint8 codeUntouched[EMaxCodeBytes];				// placeholder for unmodified original code
-															//   (we patch IP-relative addressing)
+			uint8 *pSystemFunction;                      // the original system function
+			uint32 cbOverwrittenCode;                    // number of bytes overwritten by the jump
+			uint8 *pHookFunction;                        // the hook function that we provide
+			uint8 codeJumpToHookFunction[EMaxCodeBytes]; // placeholder for code that jumps to the hook function
+			uint8 codeTrampoline[EMaxCodeBytes];         // placeholder for code that holds the first few bytes from the system function and a jump to the remainder in the original location
+			uint8 codeUntouched[EMaxCodeBytes];          // placeholder for unmodified original code (we patch IP-relative addressing)
 		};
 
 		struct CTrampolinePool
@@ -143,6 +202,7 @@ namespace NMib::NInstrumentation
 			umint m_Size;
 			bool m_bImage;
 		};
+
 		NMib::NContainer::TCMap<umint, CModuleCache, NMib::CSort_Default, CAllocator> m_ModulesCache;
 
 		NMib::NContainer::TCRegions<uint8 *, NMib::CVoidTag, CAllocator> m_Unprotected;
@@ -177,15 +237,16 @@ namespace NMib::NInstrumentation
 		CTrampoline *fp_TrampolineAlloc(uint8 *pSystemFunction, int64 nLimitUp, int64 nLimitDown);
 		CTrampoline *fp_TrampolineGet(uint8 *pHookedFunction);
 		void fp_TrampolineFree(CTrampoline *pTrampoline, bool bNeverUsed);
-		void fp_FixupIPRelativeAddressing(uint8 *pbNew, uint8 *pbOriginal, CPatchData* pdata);
-		uint32 fp_DisassembleAndSkip(void * pFunction, uint32 dwMinLen, CPatchData* pdata);
+		void fp_FixupIPRelativeAddressing(uint8 *pbNew, uint8 *pbOriginal, CPatchData *pdata);
+		uint32 fp_DisassembleAndSkip(void *pFunction, uint32 dwMinLen, CPatchData *pdata);
 
 		void fp_Suspend();
 		void fp_Resume();
+
 	public:
 		CMHook();
-		bool f_SetHook(void ** ppSystemFunction, void * pHookFunction);
-		bool f_Unhook(void ** ppHookedFunction);
+		bool f_SetHook(void **ppSystemFunction, void *pHookFunction);
+		bool f_Unhook(void **ppHookedFunction);
 		void f_Suspend();
 		void f_Resume();
 	};
