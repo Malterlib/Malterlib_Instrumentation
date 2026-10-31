@@ -113,15 +113,12 @@ namespace NMib::NInstrumentation
 		struct CTrampoline
 		{
 			CTrampolinePool *m_pPool;
-			uint8 *pSystemFunction;							// the original system function
-			uint32 cbOverwrittenCode;						// number of bytes overwritten by the jump
-			uint8 *pHookFunction;							// the hook function that we provide
-			uint8 codeJumpToHookFunction[EMaxCodeBytes];	// placeholder for code that jumps to the hook function
-			uint8 codeTrampoline[EMaxCodeBytes];			// placeholder for code that holds the first few
-															//   bytes from the system function and a jump to the remainder
-															//   in the original location
-			uint8 codeUntouched[EMaxCodeBytes];				// placeholder for unmodified original code
-															//   (we patch IP-relative addressing)
+			uint8 *pSystemFunction;                      // the original system function
+			uint32 cbOverwrittenCode;                    // number of bytes overwritten by the jump
+			uint8 *pHookFunction;                        // the hook function that we provide
+			uint8 codeJumpToHookFunction[EMaxCodeBytes]; // placeholder for code that jumps to the hook function
+			uint8 codeTrampoline[EMaxCodeBytes];         // placeholder for code that holds the first few bytes from the system function and a jump to the remainder in the original location
+			uint8 codeUntouched[EMaxCodeBytes];          // placeholder for unmodified original code (we patch IP-relative addressing)
 		};
 
 		struct CTrampolinePool
