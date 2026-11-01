@@ -110,4 +110,3 @@ Property
 	MalterlibTests =+ "Malterlib_Instrumentation"
 	//MalterlibTestFiles_Malterlib_Instrumentation: [type(CEntity)] = ["Test/*"->MakeAbsolute()]
 }
-
