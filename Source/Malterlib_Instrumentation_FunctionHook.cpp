@@ -36,7 +36,7 @@ namespace NMib::NInstrumentation
 #if 0
 #	define DMHookTrace DMibTraceSafe
 #else
-#	define DMHookTrace(_Format, _Args) (void)0
+#	define DMHookTrace(d_Format, d_Args) (void)0
 #endif
 
 	//=========================================================================

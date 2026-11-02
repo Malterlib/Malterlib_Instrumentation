@@ -5,7 +5,6 @@
 Checks: >-
   -*,
   malterlib-*,
-  -malterlib-struct-not-class,
-  -malterlib-macro-naming
+  -malterlib-struct-not-class
 CheckOptions:
   malterlib.OptionsFile: ../Core/ClangTidyOptions.yaml
