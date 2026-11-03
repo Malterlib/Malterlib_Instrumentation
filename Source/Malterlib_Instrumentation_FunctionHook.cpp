@@ -39,97 +39,193 @@ namespace NMib::NInstrumentation
 #	define DMHookTrace(d_Format, d_Args) (void)0
 #endif
 
+	only_parameters_aliased malloc_like auto CMHook::CAllocatorIgnore::f_AllocWithSizeDebug
+		(
+			umint &_Size
+			, ch8 const *_pFile
+			, aint _Line
+			, EHeapDebugFlag _Flags
+			, EAllocationFlag _AllocFlags
+			, ENumaNode _NumaNode
+		)
+		-> void *
+	{
+		return CAllocator_NonTrackedHeap::f_AllocWithSizeDebug(_Size, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+	}
+
+	only_parameters_aliased malloc_like auto CMHook::CAllocatorIgnore::f_AllocDebug
+		(
+			umint _Size
+			, ch8 const *_pFile
+			, aint _Line
+			, EHeapDebugFlag _Flags
+			, EAllocationFlag _AllocFlags
+			, ENumaNode _NumaNode
+		)
+		-> void *
+	{
+		return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+	}
+
+	only_parameters_aliased malloc_like auto CMHook::CAllocatorIgnore::f_AllocAlignedWithSizeDebug
+		(
+			umint &_Size
+			, umint _Alignment
+			, ch8 const *_pFile
+			, aint _Line
+			, EHeapDebugFlag _Flags
+			, EAllocationFlag _AllocFlags
+			, ENumaNode _NumaNode
+		)
+		-> void *
+	{
+		return CAllocator_NonTrackedHeap::f_AllocAlignedWithSizeDebug(_Size, _Alignment, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+	}
+
+	only_parameters_aliased malloc_like auto CMHook::CAllocatorIgnore::f_AllocAlignedDebug
+		(
+			umint _Size
+			, umint _Alignment
+			, ch8 const *_pFile
+			, aint _Line
+			, EHeapDebugFlag _Flags
+			, EAllocationFlag _AllocFlags
+			, ENumaNode _NumaNode
+		)
+		-> void *
+	{
+		return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(_Size, _Alignment, _pFile, _Line, _Flags | EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+	}
+
+	only_parameters_aliased malloc_like void *CMHook::CAllocatorIgnore::f_AllocWithSize(umint &_Size, EAllocationFlag _AllocFlags, ENumaNode _NumaNode)
+	{
+		return CAllocator_NonTrackedHeap::f_AllocWithSizeDebug(_Size, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+	}
+
+	only_parameters_aliased malloc_like void *CMHook::CAllocatorIgnore::f_Alloc(umint _Size, EAllocationFlag _AllocFlags, ENumaNode _NumaNode)
+	{
+		return CAllocator_NonTrackedHeap::f_AllocDebug(_Size, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+	}
+
+	only_parameters_aliased malloc_like auto CMHook::CAllocatorIgnore::f_AllocAlignedWithSize(umint &_Size, umint _Alignment, EAllocationFlag _AllocFlags, ENumaNode _NumaNode) -> void *
+	{
+		return CAllocator_NonTrackedHeap::f_AllocAlignedWithSizeDebug(_Size, _Alignment, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+	}
+
+	only_parameters_aliased malloc_like auto CMHook::CAllocatorIgnore::f_AllocAligned(umint _Size, umint _Alignment, EAllocationFlag _AllocFlags, ENumaNode _NumaNode) -> void *
+	{
+		return CAllocator_NonTrackedHeap::f_AllocAlignedDebug(_Size, _Alignment, DMibPFile, DMibPLine, EHeapDebugFlag_Ignore, _AllocFlags, _NumaNode);
+	}
+
+	only_parameters_aliased auto CMHook::CAllocatorIgnore::f_AllocSafeWithSize(umint &_Size, umint _Alignment, EAllocationFlag _AllocFlags, ENumaNode _NumaNode) -> CAutoDestroy
+	{
+		CAutoDestroy AutoDestroy;
+		AutoDestroy.m_pMemory = f_AllocAlignedWithSize(_Size, _Alignment, _AllocFlags, _NumaNode);
+		AutoDestroy.m_Size = _Size;
+
+		return fg_Move(AutoDestroy);
+	}
+
+	only_parameters_aliased auto CMHook::CAllocatorIgnore::f_AllocSafe(umint _Size, umint _Alignment, EAllocationFlag _AllocFlags, ENumaNode _NumaNode) -> CAutoDestroy
+	{
+		CAutoDestroy AutoDestroy;
+		AutoDestroy.m_pMemory = f_AllocAligned(_Size, _Alignment, _AllocFlags, _NumaNode);
+		AutoDestroy.m_Size = _Size;
+
+		return fg_Move(AutoDestroy);
+	}
+
 	//=========================================================================
 	// Internal function:
 	//
 	// Skip over jumps that lead to the real function. Gets around import
 	// jump tables, etc.
 	//=========================================================================
-	uint8 *CMHook::fp_SkipJumps(uint8 *pbCode)
+	uint8 *CMHook::fp_SkipJumps(uint8 *_pCode)
 	{
-		if (this->m_Hooks.f_FindEqual((void *)pbCode))
+		if (this->mp_Hooks.f_FindEqual((void *)_pCode))
 			return nullptr; // Already mapped
 #if defined(DArchitecture_x86) || defined(DArchitecture_x64)
 
 #	if defined DArchitecture_x64
-		if ((pbCode[0] & 0xF0) == 0x40 && pbCode[1] == 0xff && pbCode[2] == 0x25)
+		if ((_pCode[0] & 0xF0) == 0x40 && _pCode[1] == 0xff && _pCode[2] == 0x25)
 		{
 			// REX PREFIX, just skip it
-			++pbCode;
+			++_pCode;
 		}
 #	endif
 
-		if (pbCode[0] == 0xff && pbCode[1] == 0x25)
+		if (_pCode[0] == 0xff && _pCode[1] == 0x25)
 		{
 #	ifdef DArchitecture_x86
 			// on x86 we have an absolute pointer...
-			uint8 *pbTarget = *(uint8 **)&pbCode[2];
+			uint8 *pTarget = *(uint8 **)&_pCode[2];
 			// ... that shows us an absolute pointer.
-			return fp_SkipJumps(*(uint8 **)pbTarget);
+			return fp_SkipJumps(*(uint8 **)pTarget);
 #	elif defined DArchitecture_x64
 			// on x64 we have a 32-bit offset...
-			int32 lOffset = *(int32 *)&pbCode[2];
+			int32 Offset = *(int32 *)&_pCode[2];
 			// ... that shows us an absolute pointer
-			return fp_SkipJumps(*(uint8 **)(pbCode + 6 + lOffset));
+			return fp_SkipJumps(*(uint8 **)(_pCode + 6 + Offset));
 #	endif
 		}
-		else if (pbCode[0] == 0xe9)
+		else if (_pCode[0] == 0xe9)
 		{
 			// here the behavior is identical, we have...
 			// ...a 32-bit offset to the destination.
-			return fp_SkipJumps(pbCode + 5 + *(int32 *)&pbCode[1]);
+			return fp_SkipJumps(_pCode + 5 + *(int32 *)&_pCode[1]);
 		}
-		else if (pbCode[0] == 0xeb)
+		else if (_pCode[0] == 0xeb)
 		{
 			// and finally an 8-bit offset to the destination
-			return fp_SkipJumps(pbCode + 2 + *(int8 *)&pbCode[1]);
+			return fp_SkipJumps(_pCode + 2 + *(int8 *)&_pCode[1]);
 		}
 #else
 #	error unsupported platform
 #endif
-		return pbCode;
+		return _pCode;
 	}
 
 	//=========================================================================
 	// Internal function:
 	//
-	// Writes code at pbCode that jumps to pbJumpTo. Will attempt to do this
+	// Writes code at _pCode that jumps to _pJumpTo. Will attempt to do this
 	// in as few bytes as possible. Important on x64 where the long jump
 	// (0xff 0x25 ....) can take up 14 bytes.
 	//=========================================================================
-	uint8 *CMHook::fp_EmitJump(uint8 *pbCode, uint8 *pbJumpTo)
+	uint8 *CMHook::fp_EmitJump(uint8 *_pCode, uint8 *_pJumpTo)
 	{
 #if defined(DArchitecture_x86) || defined(DArchitecture_x64)
-		uint8 *pbJumpFrom = pbCode + 5;
-		umint cbDiff = pbJumpFrom > pbJumpTo ? pbJumpFrom - pbJumpTo : pbJumpTo - pbJumpFrom;
-		DMHookTrace("mhooks: fp_EmitJump: Jumping from {} to {}, diff is {}{\n}", pbJumpFrom, pbJumpTo, cbDiff);
-		if (cbDiff <= 0x7fff0000)
+		uint8 *pJumpFrom = _pCode + 5;
+		umint nDistanceBytes = pJumpFrom > _pJumpTo ? pJumpFrom - _pJumpTo : _pJumpTo - pJumpFrom;
+		DMHookTrace("mhooks: fp_EmitJump: Jumping from {} to {}, diff is {}{\n}", pJumpFrom, _pJumpTo, nDistanceBytes);
+		if (nDistanceBytes <= 0x7fff0000)
 		{
-			pbCode[0] = 0xe9;
-			pbCode += 1;
-			*((uint32 *)pbCode) = (uint32)(umint)(pbJumpTo - pbJumpFrom);
-			pbCode += sizeof(uint32);
+			_pCode[0] = 0xe9;
+			_pCode += 1;
+			*((uint32 *)_pCode) = (uint32)(umint)(_pJumpTo - pJumpFrom);
+			_pCode += sizeof(uint32);
 		}
 		else
 		{
 			// movabs x, eax/rax
 #	ifdef DArchitecture_x64
-			*pbCode = 0x48;
-			++pbCode;
+			*_pCode = 0x48;
+			++_pCode;
 #	endif
-			*pbCode = 0xb8;
-			++pbCode;
-			*((umint *)pbCode) = (umint)(pbJumpTo);
-			pbCode += sizeof(umint);
+			*_pCode = 0xb8;
+			++_pCode;
+			*((umint *)_pCode) = (umint)(_pJumpTo);
+			_pCode += sizeof(umint);
 			// jmp eax/rax
-			pbCode[0] = 0xff;
-			pbCode[1] = 0xe0;
-			pbCode += 2;
+			_pCode[0] = 0xff;
+			_pCode[1] = 0xe0;
+			_pCode += 2;
 		}
 #else
 #	error unsupported platform
 #endif
-		return pbCode;
+		return _pCode;
 	}
 
 	//=========================================================================
@@ -141,12 +237,12 @@ namespace NMib::NInstrumentation
 
 	CMHook::CTrampolinePool::CTrampolinePool(void *_pMemory, umint _MemorySize)
 	{
-		umint nTrampoline = _MemorySize / sizeof(CTrampoline);
-		m_Size = nTrampoline * sizeof(CTrampoline);
+		umint nTrampolines = _MemorySize / sizeof(CTrampoline);
+		m_Size = nTrampolines * sizeof(CTrampoline);
 
 		CTrampoline *pTrampolines = (CTrampoline *)_pMemory;
 
-		for (umint i = 0; i < nTrampoline; ++i)
+		for (umint i = 0; i < nTrampolines; ++i)
 		{
 			auto pData = &pTrampolines[i];
 
@@ -180,14 +276,14 @@ namespace NMib::NInstrumentation
 		NMemory::CAllocator_VirtualNoTracking::f_Free(pStart, Size);
 	}
 
-	CMHook::CTrampoline *CMHook::fp_TrampolineAlloc(uint8 *pSystemFunction, int64 nLimitUp, int64 nLimitDown)
+	CMHook::CTrampoline *CMHook::fp_TrampolineAlloc(uint8 *_pSystemFunction, int64 _LimitUp, int64 _LimitDown)
 	{
-		uint8 *pLower = pSystemFunction + nLimitUp;
+		uint8 *pLower = _pSystemFunction + _LimitUp;
 		pLower = pLower < (uint8 *)(umint)0x0000000080000000 ? (uint8 *)(0x1) : (uint8 *)(pLower - (uint8 *)0x7fff0000);
-		uint8 *pUpper = pSystemFunction + nLimitDown;
+		uint8 *pUpper = _pSystemFunction + _LimitDown;
 		pUpper = pUpper < (uint8 *)(umint)0xffffffff80000000 ? (uint8 *)(pUpper + (umint)0x7ff80000) : (uint8 *)(umint)0xfffffffffff80000;
 
-		for (auto iPool = m_TrampolinePools.f_GetIterator_SmallestGreaterThanEqual(pLower); iPool; ++iPool)
+		for (auto iPool = mp_TrampolinePools.f_GetIterator_SmallestGreaterThanEqual(pLower); iPool; ++iPool)
 		{
 			uint8 *pStart = iPool.f_GetKey();
 			auto pPool = &*iPool;
@@ -201,7 +297,7 @@ namespace NMib::NInstrumentation
 					CTrampoline *pTrampoline = (CTrampoline *)pFreeTrampoline;
 					NMemory::fg_MemClear(*pTrampoline);
 					pTrampoline->m_pPool = pPool;
-					m_Hooks[pTrampoline->codeTrampoline] = pTrampoline;
+					mp_Hooks[pTrampoline->m_CodeTrampoline] = pTrampoline;
 					++pPool->m_nUsed;
 					return pTrampoline;
 				}
@@ -217,7 +313,7 @@ namespace NMib::NInstrumentation
 			// determine lower and upper bounds for the allocation locations.
 			// in the basic scenario this is +/- 2GB but IP-relative instructions
 			// found in the original code may require a smaller window.
-			DMHookTrace("mhooks: fp_TrampolineAlloc: Allocating for {} between {} and {}{\n}", pSystemFunction, pLower, pUpper);
+			DMHookTrace("mhooks: fp_TrampolineAlloc: Allocating for {} between {} and {}{\n}", _pSystemFunction, pLower, pUpper);
 
 			umint Size = NMemory::CAllocator_VirtualNoTracking::f_SizePadded(sizeof(CTrampoline));
 			pMemory = (uint8 *)NSys::fg_Mem_VirtualAllocInRange(Size, pLower, pUpper, EAllocationFlag_WillFreeWithSize);
@@ -225,7 +321,7 @@ namespace NMib::NInstrumentation
 			// found and allocated a trampoline?
 			if (pMemory)
 			{
-				auto Mapped = m_TrampolinePools(pMemory, pMemory, Size);
+				auto Mapped = mp_TrampolinePools(pMemory, pMemory, Size);
 
 				auto *pPool = &*Mapped;
 
@@ -236,7 +332,7 @@ namespace NMib::NInstrumentation
 					CTrampoline *pTrampoline = (CTrampoline *)pFreeTrampoline;
 					NMemory::fg_MemClear(*pTrampoline);
 					pTrampoline->m_pPool = pPool;
-					m_Hooks[pTrampoline->codeTrampoline] = pTrampoline;
+					mp_Hooks[pTrampoline->m_CodeTrampoline] = pTrampoline;
 					++pPool->m_nUsed;
 					return pTrampoline;
 				}
@@ -252,9 +348,9 @@ namespace NMib::NInstrumentation
 	// Return the internal trampoline structure that belongs to a hooked function.
 	//=========================================================================
 
-	CMHook::CTrampoline *CMHook::fp_TrampolineGet(uint8 *pHookedFunction)
+	CMHook::CTrampoline *CMHook::fp_TrampolineGet(uint8 *_pHookedFunction)
 	{
-		auto iFind = m_Hooks.f_FindEqual(pHookedFunction);
+		auto iFind = mp_Hooks.f_FindEqual(_pHookedFunction);
 		if (iFind)
 			return *iFind;
 		return nullptr;
@@ -265,16 +361,16 @@ namespace NMib::NInstrumentation
 	//
 	// Free a trampoline structure.
 	//=========================================================================
-	void CMHook::fp_TrampolineFree(CTrampoline *pTrampoline, bool bNeverUsed)
+	void CMHook::fp_TrampolineFree(CTrampoline *_pTrampoline, bool _bNeverUsed)
 	{
-		m_Hooks.f_Remove(pTrampoline->codeTrampoline);
-		auto pPool = pTrampoline->m_pPool;
+		mp_Hooks.f_Remove(_pTrampoline->m_CodeTrampoline);
+		auto pPool = _pTrampoline->m_pPool;
 
-		CFreeTrampoline *pFree = new(pTrampoline) CFreeTrampoline();
+		CFreeTrampoline *pFree = new(_pTrampoline) CFreeTrampoline();
 		pPool->m_FreeTrampolines.f_InsertLast(pFree);
 
 		if ((--pPool->m_nUsed) == 0)
-			m_TrampolinePools.f_Remove(pPool);
+			mp_TrampolinePools.f_Remove(pPool);
 	}
 
 	CMHook::CMHook()
@@ -284,21 +380,21 @@ namespace NMib::NInstrumentation
 	//=========================================================================
 	// if IP-relative addressing has been detected, fix up the code so the
 	// offset points to the original location
-	void CMHook::fp_FixupIPRelativeAddressing(uint8 *pbNew, uint8 *pbOriginal, CPatchData *pdata)
+	void CMHook::fp_FixupIPRelativeAddressing(uint8 *_pNew, uint8 *_pOriginal, CPatchData *_pData)
 	{
 #if defined DArchitecture_x64
-		int64 diff = pbNew - pbOriginal;
-		for (uint32 i = 0; i < pdata->nRipCnt; i++)
+		int64 Difference = _pNew - _pOriginal;
+		for (uint32 i = 0; i < _pData->m_nRips; i++)
 		{
-			uint32 dwNewDisplacement = (uint32)(pdata->rips[i].nDisplacement - diff);
+			uint32 NewDisplacement = (uint32)(_pData->m_Rips[i].m_Displacement - Difference);
 			DMHookTrace
 				(
 					"mhooks: fixing up RIP instruction operand for code at 0x{}: "
 					"old displacement: 0x{nfh,sj8,sf0}, new displacement: 0x{nfh,sj8,sf0}{\n}"
-					, (pbNew + pdata->rips[i].dwOffset) << pdata->rips[i].nDisplacement << dwNewDisplacement
+					, (_pNew + _pData->m_Rips[i].m_Offset) << _pData->m_Rips[i].m_Displacement << NewDisplacement
 				)
 			;
-			*(uint32 *)(pbNew + pdata->rips[i].dwOffset) = dwNewDisplacement;
+			*(uint32 *)(_pNew + _pData->m_Rips[i].m_Offset) = NewDisplacement;
 		}
 #endif
 	}
@@ -310,42 +406,42 @@ namespace NMib::NInstrumentation
 	// at which point disassembly must stop.
 	// Finally, detect and collect information on IP-relative instructions
 	// that we can patch.
-	uint32 CMHook::fp_DisassembleAndSkip(void *pFunction, uint32 dwMinLen, CPatchData *pdata)
+	uint32 CMHook::fp_DisassembleAndSkip(void *_pFunction, uint32 _MinLength, CPatchData *o_pData)
 	{
-		uint32 dwRet = 0;
-		pdata->nLimitDown = 0;
-		pdata->nLimitUp = 0;
-		pdata->nRipCnt = 0;
+		uint32 SkippedLength = 0;
+		o_pData->m_LimitDown = 0;
+		o_pData->m_LimitUp = 0;
+		o_pData->m_nRips = 0;
 #ifdef DArchitecture_x86
-		ARCHITECTURE_TYPE arch = ARCH_X86;
+		ARCHITECTURE_TYPE Architecture = ARCH_X86;
 #elif defined DArchitecture_x64
-		ARCHITECTURE_TYPE arch = ARCH_X64;
+		ARCHITECTURE_TYPE Architecture = ARCH_X64;
 #else
 #	error unsupported platform
 #endif
-		DISASSEMBLER dis;
-		if (InitDisassembler(&dis, arch))
+		DISASSEMBLER Disassembler;
+		if (InitDisassembler(&Disassembler, Architecture))
 		{
-			INSTRUCTION *pins = NULL;
-			U8 *pLoc = (U8 *)pFunction;
-			uint32 dwFlags = DISASM_DECODE | DISASM_ALIGNOUTPUT | DISASM_SUPPRESSERRORS; // DISASM_DISASSEMBLE |
+			INSTRUCTION *pInstruction = NULL;
+			U8 *pLoc = (U8 *)_pFunction;
+			uint32 Flags = DISASM_DECODE | DISASM_ALIGNOUTPUT | DISASM_SUPPRESSERRORS; // DISASM_DISASSEMBLE |
 #ifdef DMibDebug
-			// dwFlags |= DISASM_DISASSEMBLE;
+			// Flags |= DISASM_DISASSEMBLE;
 #endif
 
 			DMHookTrace("mhooks:	: Disassembling {}{\n}", pLoc);
-			while ((dwRet < dwMinLen) && (pins = GetInstruction(&dis, (ULONG_PTR)pLoc, pLoc, dwFlags)))
+			while ((SkippedLength < _MinLength) && (pInstruction = GetInstruction(&Disassembler, (ULONG_PTR)pLoc, pLoc, Flags)))
 			{
-				DMHookTrace("mhooks: fp_DisassembleAndSkip: {}: {}{\n}", pLoc, pins->String);
-				if (pins->Type == ITYPE_RET)
+				DMHookTrace("mhooks: fp_DisassembleAndSkip: {}: {}{\n}", pLoc, pInstruction->String);
+				if (pInstruction->Type == ITYPE_RET)
 					break;
-				if (pins->Type == ITYPE_BRANCH)
+				if (pInstruction->Type == ITYPE_BRANCH)
 					break;
-				if (pins->Type == ITYPE_BRANCHCC)
+				if (pInstruction->Type == ITYPE_BRANCHCC)
 					break;
-				if (pins->Type == ITYPE_CALL)
+				if (pInstruction->Type == ITYPE_CALL)
 					break;
-				if (pins->Type == ITYPE_CALLCC)
+				if (pInstruction->Type == ITYPE_CALLCC)
 					break;
 
 #if defined DArchitecture_x64
@@ -353,13 +449,13 @@ namespace NMib::NInstrumentation
 				// mov or lea to/from register to/from rip+imm32
 				if
 				(
-					(pins->Type == ITYPE_MOV || pins->Type == ITYPE_LEA)
-					&& (pins->X86.Relative)
-					&& (pins->OperandCount == 2)
+					(pInstruction->Type == ITYPE_MOV || pInstruction->Type == ITYPE_LEA)
+					&& (pInstruction->X86.Relative)
+					&& (pInstruction->OperandCount == 2)
 					&&
 					(
-						((pins->Operands[0].Flags & OP_IPREL) && (pins->Operands[0].Register == AMD64_REG_RIP || pins->Operands[0].Register == X86_REG_EIP))
-						|| ((pins->Operands[1].Flags & OP_IPREL) && (pins->Operands[1].Register == AMD64_REG_RIP || pins->Operands[1].Register == X86_REG_EIP))
+						((pInstruction->Operands[0].Flags & OP_IPREL) && (pInstruction->Operands[0].Register == AMD64_REG_RIP || pInstruction->Operands[0].Register == X86_REG_EIP))
+						|| ((pInstruction->Operands[1].Flags & OP_IPREL) && (pInstruction->Operands[1].Register == AMD64_REG_RIP || pInstruction->Operands[1].Register == X86_REG_EIP))
 					)
 				)
 				{
@@ -369,36 +465,36 @@ namespace NMib::NInstrumentation
 						(
 							"mhooks: fp_DisassembleAndSkip: found OP_IPREL on operand {} with displacement 0x{nfh,sj8,sf0} (in memory: {}){\n}"
 							, 1
-							, pins->X86.Displacement
-							, *(int32 *)(pLoc + (pins->Length - 4))
+							, pInstruction->X86.Displacement
+							, *(int32 *)(pLoc + (pInstruction->Length - 4))
 						)
 					;
 					bProcessRip = true;
 				}
-				else if ((pins->OperandCount >= 1) && (pins->Operands[0].Flags & OP_IPREL))
+				else if ((pInstruction->OperandCount >= 1) && (pInstruction->Operands[0].Flags & OP_IPREL))
 				{
 					// unsupported rip-addressing
 					DMHookTrace("mhooks: fp_DisassembleAndSkip: found unsupported OP_IPREL on operand {} at {}{\n}", 0, pLoc);
 					// dump instruction bytes to the debug output
-					for (uint32 i = 0; i < pins->Length; i++)
+					for (uint32 i = 0; i < pInstruction->Length; i++)
 						DMHookTrace("mhooks: fp_DisassembleAndSkip: instr byte {sj2,sf0}: 0x{nfh,sj2,sf0}{\n}", i, pLoc[i]);
 					break;
 				}
-				else if ((pins->OperandCount >= 2) && (pins->Operands[1].Flags & OP_IPREL))
+				else if ((pInstruction->OperandCount >= 2) && (pInstruction->Operands[1].Flags & OP_IPREL))
 				{
 					// unsupported rip-addressing
 					DMHookTrace("mhooks: fp_DisassembleAndSkip: found unsupported OP_IPREL on operand {} at {}{\n}", 1, pLoc);
 					// dump instruction bytes to the debug output
-					for (uint32 i = 0; i < pins->Length; i++)
+					for (uint32 i = 0; i < pInstruction->Length; i++)
 						DMHookTrace("mhooks: fp_DisassembleAndSkip: instr byte {sj2,sf0}: 0x{nfh,sj2,sf0}{\n}", i, pLoc[i]);
 					break;
 				}
-				else if ((pins->OperandCount >= 3) && (pins->Operands[2].Flags & OP_IPREL))
+				else if ((pInstruction->OperandCount >= 3) && (pInstruction->Operands[2].Flags & OP_IPREL))
 				{
 					// unsupported rip-addressing
 					DMHookTrace("mhooks: fp_DisassembleAndSkip: found unsupported OP_IPREL on operand {} at {}{\n}", 2, pLoc);
 					// dump instruction bytes to the debug output
-					for (uint32 i = 0; i < pins->Length; i++)
+					for (uint32 i = 0; i < pInstruction->Length; i++)
 						DMHookTrace("mhooks: fp_DisassembleAndSkip: instr byte {sj2,sf0}: 0x{nfh,sj2,sf0}{\n}", i, pLoc[i]);
 					break;
 				}
@@ -406,18 +502,18 @@ namespace NMib::NInstrumentation
 				if (bProcessRip)
 				{
 					// calculate displacement relative to function start
-					int64 nAdjustedDisplacement = pins->X86.Displacement + (pLoc - (U8 *)pFunction);
+					int64 nAdjustedDisplacement = pInstruction->X86.Displacement + (pLoc - (U8 *)_pFunction);
 					// store displacement values furthest from zero (both positive and negative)
-					if (nAdjustedDisplacement < pdata->nLimitDown)
-						pdata->nLimitDown = nAdjustedDisplacement;
-					if (nAdjustedDisplacement > pdata->nLimitUp)
-						pdata->nLimitUp = nAdjustedDisplacement;
+					if (nAdjustedDisplacement < o_pData->m_LimitDown)
+						o_pData->m_LimitDown = nAdjustedDisplacement;
+					if (nAdjustedDisplacement > o_pData->m_LimitUp)
+						o_pData->m_LimitUp = nAdjustedDisplacement;
 					// store patch info
-					if (pdata->nRipCnt < EMaxRips)
+					if (o_pData->m_nRips < mcp_MaxRips)
 					{
-						pdata->rips[pdata->nRipCnt].dwOffset = dwRet + (pins->Length - 4);
-						pdata->rips[pdata->nRipCnt].nDisplacement = pins->X86.Displacement;
-						pdata->nRipCnt++;
+						o_pData->m_Rips[o_pData->m_nRips].m_Offset = SkippedLength + (pInstruction->Length - 4);
+						o_pData->m_Rips[o_pData->m_nRips].m_Displacement = pInstruction->X86.Displacement;
+						o_pData->m_nRips++;
 					}
 					else
 					{
@@ -427,14 +523,14 @@ namespace NMib::NInstrumentation
 				}
 #endif
 
-				dwRet += pins->Length;
-				pLoc += pins->Length;
+				SkippedLength += pInstruction->Length;
+				pLoc += pInstruction->Length;
 			}
 
-			CloseDisassembler(&dis);
+			CloseDisassembler(&Disassembler);
 		}
 
-		return dwRet;
+		return SkippedLength;
 	}
 
 	bool CMHook::fp_Unprotect(uint8 *_pMem, umint _Size)
@@ -445,7 +541,7 @@ namespace NMib::NInstrumentation
 		NContainer::TCRegions<uint8 *, zbool, NMemory::CAllocator_NonTrackedHeap> ToAdd;
 		ToAdd.f_MakeRegion(pStart, pEnd);
 
-		for (auto iRegion = m_Unprotected.f_GetIterator(pStart); iRegion; ++iRegion)
+		for (auto iRegion = mp_Unprotected.f_GetIterator(pStart); iRegion; ++iRegion)
 		{
 			if (iRegion->f_End() < pStart)
 				continue;
@@ -479,7 +575,7 @@ namespace NMib::NInstrumentation
 				try
 				{
 					NSys::fg_Mem_VirtualProtect(pStart, Size, EProtect_Exec | EProtect_Read | EProtect_Write);
-					m_Unprotected.f_MakeRegion(iRegion->f_Start(), iRegion->f_End());
+					mp_Unprotected.f_MakeRegion(iRegion->f_Start(), iRegion->f_End());
 				}
 				catch (NException::CException const &_Exception)
 				{
@@ -494,60 +590,60 @@ namespace NMib::NInstrumentation
 	}
 
 	//=========================================================================
-	bool CMHook::f_SetHook(void **ppSystemFunction, void *pHookFunction)
+	bool CMHook::f_SetHook(void **o_pSystemFunction, void *_pHookFunction)
 	{
 		CTrampoline *pTrampoline = NULL;
-		void *pSystemFunction = *ppSystemFunction;
+		void *pSystemFunction = *o_pSystemFunction;
 		// ensure thread-safety
-		DMibLock(m_Lock);
-		DMHookTrace("mhooks: Mhook_SetHook: Started on the job: {} / {}{\n}", pSystemFunction, pHookFunction);
+		DMibLock(mp_Lock);
+		DMHookTrace("mhooks: Mhook_SetHook: Started on the job: {} / {}{\n}", pSystemFunction, _pHookFunction);
 		// find the real functions (jump over jump tables, if any)
 		pSystemFunction = fp_SkipJumps((uint8 *)pSystemFunction);
-		pHookFunction = fp_SkipJumps((uint8 *)pHookFunction);
-		if (!pSystemFunction || !pHookFunction)
+		_pHookFunction = fp_SkipJumps((uint8 *)_pHookFunction);
+		if (!pSystemFunction || !_pHookFunction)
 			return false;
-		DMHookTrace("mhooks: Mhook_SetHook: Started on the job: {} / {}{\n}", pSystemFunction, pHookFunction);
+		DMHookTrace("mhooks: Mhook_SetHook: Started on the job: {} / {}{\n}", pSystemFunction, _pHookFunction);
 		// figure out the length of the overwrite zone
-		CPatchData patchdata = {0};
-		uint32 dwInstructionLength = fp_DisassembleAndSkip(pSystemFunction, EJmpSize, &patchdata);
-		if (dwInstructionLength >= EJmpSize)
+		CPatchData PatchData = {0};
+		uint32 InstructionLength = fp_DisassembleAndSkip(pSystemFunction, mcp_JumpSize, &PatchData);
+		if (InstructionLength >= mcp_JumpSize)
 		{
-			DMHookTrace("mhooks: Mhook_SetHook: disassembly signals {} bytes{\n}", dwInstructionLength);
+			DMHookTrace("mhooks: Mhook_SetHook: disassembly signals {} bytes{\n}", InstructionLength);
 			// suspend every other thread in this process, and make sure their IP
 			// is not in the code we're about to overwrite.
-			bool bSuspend = !m_IsSuspended;
+			bool bSuspend = !mp_IsSuspended;
 			if (bSuspend)
 				fp_Suspend();
 			// allocate a trampoline structure (TODO: it is pretty wasteful to get
 			// VirtualAlloc to grab chunks of memory smaller than 100 bytes)
-			pTrampoline = fp_TrampolineAlloc((uint8 *)pSystemFunction, patchdata.nLimitUp, patchdata.nLimitDown);
+			pTrampoline = fp_TrampolineAlloc((uint8 *)pSystemFunction, PatchData.m_LimitUp, PatchData.m_LimitDown);
 			if (pTrampoline)
 			{
 				DMHookTrace("mhooks: Mhook_SetHook: allocated structure at {}{\n}", pTrampoline);
 				// set the system function to PAGE_EXECUTE_READWRITE
-				if (fp_Unprotect((uint8 *)pSystemFunction, dwInstructionLength))
+				if (fp_Unprotect((uint8 *)pSystemFunction, InstructionLength))
 				{
 					DMHookTrace("mhooks: Mhook_SetHook: readwrite set on system function{\n}", 0);
 					// mark our trampoline buffer to PAGE_EXECUTE_READWRITE
 					// create our trampoline function
-					uint8 *pbCode = pTrampoline->codeTrampoline;
+					uint8 *pCode = pTrampoline->m_CodeTrampoline;
 					// save original code..
-					for (uint32 i = 0; i < dwInstructionLength; i++)
-						pTrampoline->codeUntouched[i] = pbCode[i] = ((uint8 *)pSystemFunction)[i];
-					pbCode += dwInstructionLength;
+					for (uint32 i = 0; i < InstructionLength; i++)
+						pTrampoline->m_CodeUntouched[i] = pCode[i] = ((uint8 *)pSystemFunction)[i];
+					pCode += InstructionLength;
 					// plus a jump to the continuation in the original location
-					pbCode = fp_EmitJump(pbCode, ((uint8 *)pSystemFunction) + dwInstructionLength);
+					pCode = fp_EmitJump(pCode, ((uint8 *)pSystemFunction) + InstructionLength);
 					DMHookTrace("mhooks: Mhook_SetHook: updated the trampoline{\n}", 0);
 
-					DMibFastCheck(pbCode <= pTrampoline->codeTrampoline + EMaxCodeBytes);
+					DMibFastCheck(pCode <= pTrampoline->m_CodeTrampoline + mcp_MaxCodeBytes);
 
 					// fix up any IP-relative addressing in the code
-					fp_FixupIPRelativeAddressing(pTrampoline->codeTrampoline, (uint8 *)pSystemFunction, &patchdata);
+					fp_FixupIPRelativeAddressing(pTrampoline->m_CodeTrampoline, (uint8 *)pSystemFunction, &PatchData);
 
-					umint dwDistance
-						= (uint8 *)pHookFunction < (uint8 *)pSystemFunction ? (uint8 *)pSystemFunction - (uint8 *)pHookFunction : (uint8 *)pHookFunction - (uint8 *)pSystemFunction
+					umint Distance
+						= (uint8 *)_pHookFunction < (uint8 *)pSystemFunction ? (uint8 *)pSystemFunction - (uint8 *)_pHookFunction : (uint8 *)_pHookFunction - (uint8 *)pSystemFunction
 					;
-					if (dwDistance > 0x7fff0000)
+					if (Distance > 0x7fff0000)
 					{
 						// create a stub that jumps to the replacement function.
 						// we need this because jumping from the API to the hook directly
@@ -558,44 +654,44 @@ namespace NMib::NInstrumentation
 						// within +/- 2GB of the API, so we do the long jump in there.
 						// the API will jump to the "reverse trampoline" which
 						// will jump to the user's hook code.
-						pbCode = pTrampoline->codeJumpToHookFunction;
-						pbCode = fp_EmitJump(pbCode, (uint8 *)pHookFunction);
-						DMibFastCheck(pbCode <= pTrampoline->codeJumpToHookFunction + EMaxCodeBytes);
+						pCode = pTrampoline->m_CodeJumpToHookFunction;
+						pCode = fp_EmitJump(pCode, (uint8 *)_pHookFunction);
+						DMibFastCheck(pCode <= pTrampoline->m_CodeJumpToHookFunction + mcp_MaxCodeBytes);
 
 						DMHookTrace("mhooks: Mhook_SetHook: created reverse trampoline{\n}", 0);
-						NSys::fg_Mem_VirtualFlushInstructionCache(pTrampoline->codeJumpToHookFunction, pbCode - pTrampoline->codeJumpToHookFunction);
+						NSys::fg_Mem_VirtualFlushInstructionCache(pTrampoline->m_CodeJumpToHookFunction, pCode - pTrampoline->m_CodeJumpToHookFunction);
 
 						// update the API itself
-						pbCode = (uint8 *)pSystemFunction;
-						pbCode = fp_EmitJump(pbCode, pTrampoline->codeJumpToHookFunction);
-						DMibFastCheck(pbCode <= (uint8 *)pSystemFunction + EJmpSize);
+						pCode = (uint8 *)pSystemFunction;
+						pCode = fp_EmitJump(pCode, pTrampoline->m_CodeJumpToHookFunction);
+						DMibFastCheck(pCode <= (uint8 *)pSystemFunction + mcp_JumpSize);
 					}
 					else
 					{
 						// the jump will be at most 5 bytes so we can do it directly
 						// update the API itself
-						pbCode = (uint8 *)pSystemFunction;
-						pbCode = fp_EmitJump(pbCode, (uint8 *)pHookFunction);
-						DMibFastCheck(pbCode <= (uint8 *)pSystemFunction + EJmpSize);
+						pCode = (uint8 *)pSystemFunction;
+						pCode = fp_EmitJump(pCode, (uint8 *)_pHookFunction);
+						DMibFastCheck(pCode <= (uint8 *)pSystemFunction + mcp_JumpSize);
 					}
 
 					// update data members
-					pTrampoline->cbOverwrittenCode = dwInstructionLength;
-					pTrampoline->pSystemFunction = (uint8 *)pSystemFunction;
-					pTrampoline->pHookFunction = (uint8 *)pHookFunction;
+					pTrampoline->m_nOverwrittenBytes = InstructionLength;
+					pTrampoline->m_pSystemFunction = (uint8 *)pSystemFunction;
+					pTrampoline->m_pHookFunction = (uint8 *)_pHookFunction;
 
 					// flush instruction cache
-					NSys::fg_Mem_VirtualFlushInstructionCache(pTrampoline->codeTrampoline, dwInstructionLength);
+					NSys::fg_Mem_VirtualFlushInstructionCache(pTrampoline->m_CodeTrampoline, InstructionLength);
 					// flush instruction cache and restore original protection
-					NSys::fg_Mem_VirtualFlushInstructionCache(pSystemFunction, dwInstructionLength);
+					NSys::fg_Mem_VirtualFlushInstructionCache(pSystemFunction, InstructionLength);
 				}
 				else
 					DMHookTrace("mhooks: Mhook_SetHook: failed VirtualProtectEx 1: {}{\n}", 0);
-				if (pTrampoline->pSystemFunction)
+				if (pTrampoline->m_pSystemFunction)
 				{
 					// this is what the application will use as the entry point
 					// to the "original" unhooked function.
-					*ppSystemFunction = pTrampoline->codeTrampoline;
+					*o_pSystemFunction = pTrampoline->m_CodeTrampoline;
 					DMHookTrace("mhooks: Mhook_SetHook: Hooked the function!{\n}", 0);
 				}
 				else
@@ -609,37 +705,37 @@ namespace NMib::NInstrumentation
 				fp_Resume();
 		}
 		else
-			DMHookTrace("mhooks: disassembly signals {} bytes (unacceptable){\n}", dwInstructionLength);
+			DMHookTrace("mhooks: disassembly signals {} bytes (unacceptable){\n}", InstructionLength);
 		return (pTrampoline != NULL);
 	}
 
 	//=========================================================================
-	bool CMHook::f_Unhook(void **ppHookedFunction)
+	bool CMHook::f_Unhook(void **o_pHookedFunction)
 	{
-		DMHookTrace("mhooks: Mhook_Unhook: {}{\n}", *ppHookedFunction);
-		bool bRet = false;
-		DMibLock(m_Lock);
+		DMHookTrace("mhooks: Mhook_Unhook: {}{\n}", *o_pHookedFunction);
+		bool bReturn = false;
+		DMibLock(mp_Lock);
 		// get the trampoline structure that corresponds to our function
-		CTrampoline *pTrampoline = fp_TrampolineGet((uint8 *)*ppHookedFunction);
+		CTrampoline *pTrampoline = fp_TrampolineGet((uint8 *)*o_pHookedFunction);
 		if (pTrampoline)
 		{
-			bool bSuspend = !m_IsSuspended;
+			bool bSuspend = !mp_IsSuspended;
 			if (bSuspend)
 				fp_Suspend();
 			DMHookTrace("mhooks: Mhook_Unhook: found struct at {}{\n}", pTrampoline);
 			// make memory writable
-			if (fp_Unprotect((uint8 *)pTrampoline->pSystemFunction, pTrampoline->cbOverwrittenCode))
+			if (fp_Unprotect((uint8 *)pTrampoline->m_pSystemFunction, pTrampoline->m_nOverwrittenBytes))
 			{
 				DMHookTrace("mhooks: Mhook_Unhook: readwrite set on system function{\n}", 0);
-				uint8 *pbCode = (uint8 *)pTrampoline->pSystemFunction;
-				for (uint32 i = 0; i < pTrampoline->cbOverwrittenCode; i++)
-					pbCode[i] = pTrampoline->codeUntouched[i];
+				uint8 *pCode = (uint8 *)pTrampoline->m_pSystemFunction;
+				for (uint32 i = 0; i < pTrampoline->m_nOverwrittenBytes; i++)
+					pCode[i] = pTrampoline->m_CodeUntouched[i];
 				// flush instruction cache and make memory unwritable
-				NSys::fg_Mem_VirtualFlushInstructionCache(pTrampoline->pSystemFunction, pTrampoline->cbOverwrittenCode);
+				NSys::fg_Mem_VirtualFlushInstructionCache(pTrampoline->m_pSystemFunction, pTrampoline->m_nOverwrittenBytes);
 				// return the original function pointer
-				*ppHookedFunction = pTrampoline->pSystemFunction;
-				bRet = true;
-				DMHookTrace("mhooks: Mhook_Unhook: sysfunc: {}{\n}", *ppHookedFunction);
+				*o_pHookedFunction = pTrampoline->m_pSystemFunction;
+				bReturn = true;
+				DMHookTrace("mhooks: Mhook_Unhook: sysfunc: {}{\n}", *o_pHookedFunction);
 				fp_TrampolineFree(pTrampoline, false);
 				DMHookTrace("mhooks: Mhook_Unhook: unhook successful{\n}", 0);
 			}
@@ -650,35 +746,35 @@ namespace NMib::NInstrumentation
 		}
 		else
 			DMHookTrace("mhooks: No such trapoline{\n}", 0);
-		return bRet;
+		return bReturn;
 	}
 
 	void CMHook::f_Suspend()
 	{
-		m_Lock.f_Lock();
+		mp_Lock.f_Lock();
 		fp_Suspend();
 	}
 
 	void CMHook::f_Resume()
 	{
 		fp_Resume();
-		m_Lock.f_Unlock();
+		mp_Lock.f_Unlock();
 	}
 
 	void CMHook::fp_Suspend()
 	{
-		DMibFastCheck(m_IsSuspended == 0);
-		++m_IsSuspended;
+		DMibFastCheck(mp_IsSuspended == 0);
+		++mp_IsSuspended;
 
-		for (auto iPool = m_TrampolinePools.f_GetIterator(); iPool; ++iPool)
+		for (auto iPool = mp_TrampolinePools.f_GetIterator(); iPool; ++iPool)
 			iPool->f_Unprotect();
 	}
 
 	void CMHook::fp_Resume()
 	{
-		--m_IsSuspended;
+		--mp_IsSuspended;
 		// Protect data
-		for (auto iPool = m_TrampolinePools.f_GetIterator(); iPool; ++iPool)
+		for (auto iPool = mp_TrampolinePools.f_GetIterator(); iPool; ++iPool)
 			iPool->f_Protect();
 	}
 }
