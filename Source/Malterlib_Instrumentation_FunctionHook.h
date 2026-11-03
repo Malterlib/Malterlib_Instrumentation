@@ -31,8 +31,15 @@ IN THE SOFTWARE.
 
 namespace NMib::NInstrumentation
 {
-	class CMHook
+	struct CMHook
 	{
+		CMHook();
+		bool f_SetHook(void **ppSystemFunction, void *pHookFunction);
+		bool f_Unhook(void **ppHookedFunction);
+		void f_Suspend();
+		void f_Resume();
+
+	private:
 		enum
 		{
 			EMaxCodeBytes = 32
@@ -40,9 +47,8 @@ namespace NMib::NInstrumentation
 			, EJmpSize    = 5
 		};
 
-		class CAllocatorIgnore : public NMib::NMemory::CAllocator_NonTrackedHeap
+		struct CAllocatorIgnore : public NMib::NMemory::CAllocator_NonTrackedHeap
 		{
-		public:
 			using CAutoDestroy = NMemory::TCAllocator_AutoDestroyStatic<CAllocatorIgnore>;
 
 			only_parameters_aliased malloc_like static auto f_AllocWithSizeDebug
@@ -249,12 +255,5 @@ namespace NMib::NInstrumentation
 
 		void fp_Suspend();
 		void fp_Resume();
-
-	public:
-		CMHook();
-		bool f_SetHook(void **ppSystemFunction, void *pHookFunction);
-		bool f_Unhook(void **ppHookedFunction);
-		void f_Suspend();
-		void f_Resume();
 	};
 }
