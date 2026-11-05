@@ -50,8 +50,7 @@ namespace NMib::NInstrumentation
 		{
 			using CAutoDestroy = NMemory::TCAllocator_AutoDestroyStatic<CAllocatorIgnore>;
 
-			// NOLINTBEGIN(malterlib-function-naming): the allocator interface, static in stateless allocators and not in the others
-			only_parameters_aliased malloc_like static auto f_AllocWithSizeDebug
+			DMibNamedAsMemberFunction only_parameters_aliased malloc_like static auto f_AllocWithSizeDebug
 				(
 					umint &_Size
 					, ch8 const *_pFile
@@ -62,7 +61,7 @@ namespace NMib::NInstrumentation
 				)
 				-> void *
 			;
-			only_parameters_aliased malloc_like static auto f_AllocDebug
+			DMibNamedAsMemberFunction only_parameters_aliased malloc_like static auto f_AllocDebug
 				(
 					umint _Size
 					, ch8 const *_pFile
@@ -73,7 +72,7 @@ namespace NMib::NInstrumentation
 				)
 				-> void *
 			;
-			only_parameters_aliased malloc_like static auto f_AllocAlignedWithSizeDebug
+			DMibNamedAsMemberFunction only_parameters_aliased malloc_like static auto f_AllocAlignedWithSizeDebug
 				(
 					umint &_Size
 					, umint _Alignment
@@ -85,7 +84,7 @@ namespace NMib::NInstrumentation
 				)
 				-> void *
 			;
-			only_parameters_aliased malloc_like static auto f_AllocAlignedDebug
+			DMibNamedAsMemberFunction only_parameters_aliased malloc_like static auto f_AllocAlignedDebug
 				(
 					umint _Size
 					, umint _Alignment
@@ -97,9 +96,21 @@ namespace NMib::NInstrumentation
 				)
 				-> void *
 			;
-			only_parameters_aliased malloc_like static void *f_AllocWithSize(umint &_Size, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default);
-			only_parameters_aliased malloc_like static void *f_Alloc(umint _Size, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default);
-			only_parameters_aliased malloc_like static auto f_AllocAlignedWithSize
+			DMibNamedAsMemberFunction only_parameters_aliased malloc_like static void *f_AllocWithSize
+				(
+					umint &_Size
+					, EAllocationFlag _AllocFlags = EAllocationFlag_None
+					, ENumaNode _NumaNode = ENumaNode_Default
+				)
+			;
+			DMibNamedAsMemberFunction only_parameters_aliased malloc_like static void *f_Alloc
+				(
+					umint _Size
+					, EAllocationFlag _AllocFlags = EAllocationFlag_None
+					, ENumaNode _NumaNode = ENumaNode_Default
+				)
+			;
+			DMibNamedAsMemberFunction only_parameters_aliased malloc_like static auto f_AllocAlignedWithSize
 				(
 					umint &_Size
 					, umint _Alignment
@@ -108,7 +119,7 @@ namespace NMib::NInstrumentation
 				)
 				-> void *
 			;
-			only_parameters_aliased malloc_like static auto f_AllocAligned
+			DMibNamedAsMemberFunction only_parameters_aliased malloc_like static auto f_AllocAligned
 				(
 					umint _Size
 					, umint _Alignment
@@ -117,7 +128,7 @@ namespace NMib::NInstrumentation
 				)
 				-> void *
 			;
-			only_parameters_aliased static auto f_AllocSafeWithSize
+			DMibNamedAsMemberFunction only_parameters_aliased static auto f_AllocSafeWithSize
 				(
 					umint &_Size
 					, umint _Alignment
@@ -126,10 +137,15 @@ namespace NMib::NInstrumentation
 				)
 				-> CAutoDestroy
 			;
-			only_parameters_aliased static auto f_AllocSafe(umint _Size, umint _Alignment, EAllocationFlag _AllocFlags = EAllocationFlag_None, ENumaNode _NumaNode = ENumaNode_Default)
+			DMibNamedAsMemberFunction only_parameters_aliased static auto f_AllocSafe
+				(
+					umint _Size
+					, umint _Alignment
+					, EAllocationFlag _AllocFlags = EAllocationFlag_None
+					, ENumaNode _NumaNode = ENumaNode_Default
+				)
 				-> CAutoDestroy
 			;
-			// NOLINTEND(malterlib-function-naming)
 		};
 
 #if DMibConfig_MalterlibMemoryManager_Debug
